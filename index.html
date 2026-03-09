@@ -55,7 +55,7 @@
             gap: 12px; 
             justify-content: center; 
             margin-top: 20px;
-            flex-wrap: wrap;
+            flex-wrap: wrap; 
         }
         
         .tech-badge { 
@@ -100,8 +100,13 @@
             overflow-x: auto;
             gap: 20px;
             padding: 1rem 0 2rem 0;
-            scroll-snap-type: x mandatory;
             -webkit-overflow-scrolling: touch;
+            cursor: grab; 
+            user-select: none; 
+        }
+        
+        .gallery-container:active {
+            cursor: grabbing;
         }
         
         .gallery-container::-webkit-scrollbar {
@@ -122,7 +127,6 @@
         .screenshot-card {
             flex: 0 0 auto;
             width: 250px; 
-            scroll-snap-align: center;
             background-color: #1a1a1a;
             border: 1px solid #333;
             border-radius: 15px;
@@ -141,6 +145,7 @@
             width: 100%;
             border-radius: 8px;
             display: block;
+            cursor: pointer;
         }
 
         .screenshot-card p {
@@ -178,6 +183,75 @@
             color: #ff1a1a;
             text-decoration: underline;
         }
+
+        .modal {
+            display: none; 
+            position: fixed;
+            z-index: 9999; 
+            padding-top: 50px;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.9);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .modal.show {
+            display: block;
+            opacity: 1;
+        }
+
+        .modal-content {
+            margin: auto;
+            display: block;
+            max-width: 90%;
+            max-height: 85vh;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(225, 6, 0, 0.5); 
+        }
+        
+        .modal-content {  
+            animation-name: zoom;
+            animation-duration: 0.3s;
+        }
+
+        @keyframes zoom {
+            from {transform:scale(0.7)} 
+            to {transform:scale(1)}
+        }
+
+        .close {
+            position: fixed;
+            top: 20px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            transition: 0.3s;
+            cursor: pointer;
+            z-index: 10000;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: #e10600;
+            text-decoration: none;
+        }
+
+        @media only screen and (max-width: 700px){
+            .modal-content {
+                width: 95%;
+                margin-top: 100px;
+            }
+            .close {
+                top: 10px;
+                right: 20px;
+                font-size: 35px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -207,7 +281,7 @@
 
     <h2 class="gallery-title">App Screenshots</h2>
     
-    <div class="gallery-container">
+    <div class="gallery-container" id="gallery">
         <div class="screenshot-card">
             <img src="screenshot1.jpg" alt="Ekran 1">
             <p>Login Screen</p>
@@ -239,6 +313,83 @@
     <p>Contact for APK / TestFlight:</p>
     <a href="mailto:onderfatihkoca@gmail.com">onderfatihkoca@gmail.com</a>
 </footer>
+
+<div id="imageModal" class="modal">
+    <span class="close">&times;</span>
+    <img class="modal-content" id="imgFull">
+</div>
+
+<script>
+    const gallery = document.getElementById('gallery');
+    let isDown = false;
+    let startX;
+    let scrollLeft;
+    let hasDragged = false; 
+
+    gallery.addEventListener('mousedown', (e) => {
+        isDown = true;
+        hasDragged = false;
+        startX = e.pageX - gallery.offsetLeft;
+        scrollLeft = gallery.scrollLeft;
+    });
+
+    gallery.addEventListener('mouseleave', () => {
+        isDown = false;
+    });
+
+    gallery.addEventListener('mouseup', () => {
+        isDown = false;
+    });
+
+    gallery.addEventListener('mousemove', (e) => {
+        if (!isDown) return; 
+        e.preventDefault();
+        const x = e.pageX - gallery.offsetLeft;
+        const walk = (x - startX) * 2; 
+        if(Math.abs(walk) > 5) { 
+            hasDragged = true;
+        }
+        gallery.scrollLeft = scrollLeft - walk;
+    });
+
+    const modal = document.getElementById("imageModal");
+    const modalImg = document.getElementById("imgFull");
+    const span = document.getElementsByClassName("close")[0];
+
+    const images = document.querySelectorAll('.screenshot-card img');
+
+    images.forEach(img => {
+        img.addEventListener('click', function(e) {
+            if (hasDragged) {
+                return;
+            }
+            modal.classList.add("show");
+            modalImg.src = this.src; 
+            document.body.style.overflow = "hidden"; 
+        });
+    });
+
+    span.onclick = function() { 
+        closeModal();
+    }
+
+    modal.onclick = function(e) {
+        if (e.target === modal) { 
+            closeModal();
+        }
+    }
+    
+    document.addEventListener('keydown', function(e) {
+        if (e.key === "Escape" && modal.classList.contains("show")) {
+            closeModal();
+        }
+    });
+
+    function closeModal() {
+        modal.classList.remove("show");
+        document.body.style.overflow = "auto"; 
+    }
+</script>
 
 </body>
 </html>
